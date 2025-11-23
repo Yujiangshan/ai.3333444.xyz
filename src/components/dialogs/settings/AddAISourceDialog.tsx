@@ -77,8 +77,6 @@ export default function AddAISourceDialog({
       traits: undefined,
       thinkingBudget: provider === "gemini" ? 8192 : undefined,
       enabled: true,
-      pollIntervalMs: provider === "openai" ? 1_000 : undefined,
-      maxPollMs: provider === "openai" ? 30_000 : undefined,
     });
 
     setActiveSource(newId);
