@@ -172,6 +172,14 @@ OpenAI API 未经完整测试, 若出现问题请携带 Devtools 中的日志开
 
 欢迎PR
 
+### 构建 Docker 映像
+
+容器开放 `3000` 端口.
+
+```shell
+docker build -t skid-homework .
+```
+
 ### I18N 类型报错
 
 请在修改i18n 文件之后运行如下命令更新类型
