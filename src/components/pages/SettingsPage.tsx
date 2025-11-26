@@ -52,6 +52,7 @@ import AddAISourceDialog from "../dialogs/settings/AddAISourceDialog";
 import { InfoTooltip } from "../InfoTooltip";
 import { QWEN_TOKEN_URL } from "@/lib/qwen";
 import { useQwenHintAutoToggle } from "@/hooks/useQwenHintAutoToggle";
+import ShareAISourceDialog from "../dialogs/settings/ShareAISourceDialog";
 
 const DEFAULT_BASE_BY_PROVIDER: Record<AiProvider, string> = {
   gemini: DEFAULT_GEMINI_BASE_URL,
@@ -106,6 +107,9 @@ export default function SettingsPage() {
   const [availableModels, setAvailableModels] = useState<AiModelSummary[]>([]);
   const [modelPopoverOpen, setModelPopoverOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+
+  const [shareDialogUrl, setShareDialogUrl] = useState("");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   useEffect(() => {
     setLocalName(activeSource?.name ?? "");
@@ -198,9 +202,7 @@ export default function SettingsPage() {
     }
   }, [activeSource, getClientForSource, t]);
 
-  useEffect(() => {
-    loadModels();
-  }, [loadModels]);
+  loadModels();
 
   const translateSettings = useCallback(
     (key: string) => t(key as never) as string,
@@ -374,7 +376,8 @@ export default function SettingsPage() {
     // convert to url
     const url = `${window.location.origin}/settings/import#b64:${btoa(JSON.stringify(json))}`;
 
-    // TODO: open share dialog
+    setShareDialogUrl(url);
+    setShareDialogOpen(true);
   };
 
   const qwenTooltipContent = (
@@ -393,456 +396,474 @@ export default function SettingsPage() {
   );
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8 p-4 md:p-8">
-      <h1 className="text-2xl font-bold tracking-tight">{t("heading")}</h1>
+    <>
+      <ShareAISourceDialog
+        open={shareDialogOpen}
+        onOpenChangeAction={setShareDialogOpen}
+        url={shareDialogUrl}
+      />
+      <div className="mx-auto max-w-3xl space-y-8 p-4 md:p-8">
+        <h1 className="text-2xl font-bold tracking-tight">{t("heading")}</h1>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button className="w-full sm:flex-1" onClick={handleBack}>
-          {t("back")} <Kbd>ESC</Kbd>
-        </Button>
-      </div>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button className="w-full sm:flex-1" onClick={handleBack}>
+            {t("back")} <Kbd>ESC</Kbd>
+          </Button>
+        </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("sources.title")}</CardTitle>
-          <CardDescription>{t("sources.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-sm text-muted-foreground">
-              {t("sources.active.label")}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("sources.title")}</CardTitle>
+            <CardDescription>{t("sources.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                {t("sources.active.label")}
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setAddDialogOpen(true)}
+              >
+                <Plus className="mr-1.5 h-4 w-4" />
+                {t("sources.add.label")}
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => setAddDialogOpen(true)}
-            >
-              <Plus className="mr-1.5 h-4 w-4" />
-              {t("sources.add.label")}
-            </Button>
-          </div>
 
-          <div className="space-y-2">
-            {sources.map((source) => {
-              const isActive = source.id === activeSourceId;
-              return (
-                <div
-                  key={source.id}
-                  className={cn(
-                    "flex flex-col gap-3 rounded-md border border-border p-3 md:flex-row md:items-center md:justify-between",
-                    isActive && "border-primary",
-                  )}
-                  onClick={() => setActiveSource(source.id)}
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3 select-none">
-                    <div>
-                      <p className="text-sm font-medium">
-                        {source.name}
-                        <span className="ml-2 text-xs uppercase text-muted-foreground">
-                          {t(`sources.providers.${source.provider}`)}
-                        </span>
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {source.baseUrl ??
-                          DEFAULT_BASE_BY_PROVIDER[source.provider]}
-                      </p>
+            <div className="space-y-2">
+              {sources.map((source) => {
+                const isActive = source.id === activeSourceId;
+                return (
+                  <div
+                    key={source.id}
+                    className={cn(
+                      "flex flex-col gap-3 rounded-md border border-border p-3 md:flex-row md:items-center md:justify-between",
+                      isActive && "border-primary",
+                    )}
+                    onClick={() => setActiveSource(source.id)}
+                  >
+                    <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3 select-none">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {source.name}
+                          <span className="ml-2 text-xs uppercase text-muted-foreground">
+                            {t(`sources.providers.${source.provider}`)}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {source.baseUrl ??
+                            DEFAULT_BASE_BY_PROVIDER[source.provider]}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                        <Checkbox
+                          onClick={(e) => e.stopPropagation()}
+                          checked={source.enabled}
+                          onCheckedChange={(state) =>
+                            toggleSource(source.id, Boolean(state))
+                          }
+                        />
+                        {t("sources.enabled.toggle")}
+                      </label>
+
+                      {/* Share button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleShareSource(source);
+                        }}
+                        aria-label={t("sources.share.label")}
+                      >
+                        <Share2Icon className="h-4 w-4" />
+                      </Button>
+
+                      {/* Delete button */}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleRemoveSource(source.id);
+                        }}
+                        disabled={!canRemoveSource}
+                        aria-label={t("sources.remove.label")}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                      <Checkbox
-                        onClick={(e) => e.stopPropagation()}
-                        checked={source.enabled}
-                        onCheckedChange={(state) =>
-                          toggleSource(source.id, Boolean(state))
-                        }
-                      />
-                      {t("sources.enabled.toggle")}
-                    </label>
-
-                    {/* Share button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleShareSource(source);
-                      }}
-                      aria-label={t("sources.share.label")}
-                    >
-                      <Share2Icon className="h-4 w-4" />
-                    </Button>
-
-                    {/* Delete button */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleRemoveSource(source.id);
-                      }}
-                      disabled={!canRemoveSource}
-                      aria-label={t("sources.remove.label")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-            {showQwenHint && (
-              <div className="flex flex-col gap-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold">
-                      {tCommon("qwen-callout.title")}
-                    </p>
-                    <InfoTooltip
-                      content={qwenTooltipContent}
-                      ariaLabel={tCommon("qwen-callout.title")}
-                    />
-                  </div>
-                  <Badge variant="secondary" className="w-fit">
-                    {tCommon("qwen-callout.badge")}
-                  </Badge>
-                </div>
-                <Button asChild className="w-full md:w-auto">
-                  <a href={QWEN_TOKEN_URL} target="_blank" rel="noreferrer">
-                    {tCommon("qwen-callout.button")}
-                  </a>
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("api-credentials.title")}</CardTitle>
-          <CardDescription>{t("api-credentials.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="source-name">
-              {t("api-credentials.name.label")}
-            </Label>
-            <Input
-              id="source-name"
-              value={localName}
-              onChange={(event) => setLocalName(event.target.value)}
-              onBlur={handleNameBlur}
-              placeholder={t("api-credentials.name.placeholder")}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="api-key-input">{t("api-credentials.label")}</Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="api-key-input"
-                type="password"
-                value={localApiKey}
-                placeholder={t("api-credentials.placeholder", {
-                  provider: activeSource?.name ?? "",
-                })}
-                onChange={(event) => setLocalApiKey(event.target.value)}
-                onBlur={applyApiKey}
-              />
-              <Button
-                variant="outline"
-                onClick={clearApiKey}
-                disabled={!localApiKey}
-              >
-                {t("clear-input")}
-              </Button>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="base-url-input">
-              {t("advanced.custom-base-url.title")}
-            </Label>
-            <div className="flex items-center space-x-2">
-              <Input
-                id="base-url-input"
-                type="url"
-                value={localBaseUrl}
-                placeholder={t("advanced.custom-base-url.placeholder")}
-                onChange={(event) => setLocalBaseUrl(event.target.value)}
-                onBlur={applyBaseUrl}
-              />
-              <Button variant="outline" onClick={resetBaseUrl}>
-                {t("reset")}
-              </Button>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("advanced.custom-base-url.helper", {
-                provider: activeSource?.name ?? "",
+                );
               })}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+              {showQwenHint && (
+                <div className="flex flex-col gap-3 rounded-md border border-dashed border-primary/40 bg-primary/5 p-4 md:flex-row md:items-center md:justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold">
+                        {tCommon("qwen-callout.title")}
+                      </p>
+                      <InfoTooltip
+                        content={qwenTooltipContent}
+                        ariaLabel={tCommon("qwen-callout.title")}
+                      />
+                    </div>
+                    <Badge variant="secondary" className="w-fit">
+                      {tCommon("qwen-callout.badge")}
+                    </Badge>
+                  </div>
+                  <Button asChild className="w-full md:w-auto">
+                    <a href={QWEN_TOKEN_URL} target="_blank" rel="noreferrer">
+                      {tCommon("qwen-callout.button")}
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("appearance.title")}</CardTitle>
-          <CardDescription>{t("appearance.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="theme-select">{t("appearance.theme.label")}</Label>
-            <select
-              id="theme-select"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              value={themePreference}
-              onChange={(event) =>
-                handleThemeSelect(event.target.value as ThemePreference)
-              }
-            >
-              {themeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              {t("appearance.theme.desc")}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="language-select">
-              {t("appearance.language.label")}
-            </Label>
-            <select
-              id="language-select"
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-              value={language}
-              onChange={(event) =>
-                handleLanguageSelect(event.target.value as LanguagePreference)
-              }
-            >
-              {languageOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-muted-foreground">
-              {t("appearance.language.desc")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{shortcutsTitle}</CardTitle>
-          <CardDescription>{shortcutsDesc}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {shortcutItems.map((item) => (
-            <div
-              key={item.action}
-              className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <p className="font-medium">{item.label}</p>
-                <p className="text-sm text-muted-foreground">
-                  {item.description}
-                </p>
-              </div>
-              <ShortcutRecorder
-                value={keybindings[item.action] ?? ""}
-                onChange={(combo) => setKeybinding(item.action, combo)}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("api-credentials.title")}</CardTitle>
+            <CardDescription>{t("api-credentials.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="source-name">
+                {t("api-credentials.name.label")}
+              </Label>
+              <Input
+                id="source-name"
+                value={localName}
+                onChange={(event) => setLocalName(event.target.value)}
+                onBlur={handleNameBlur}
+                placeholder={t("api-credentials.name.placeholder")}
               />
             </div>
-          ))}
-          <Button variant="ghost" onClick={resetKeybindings} className="mt-2">
-            {shortcutsResetLabel}
-          </Button>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("model.title")}</CardTitle>
-          <CardDescription>{t("model.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <Popover open={modelPopoverOpen} onOpenChange={setModelPopoverOpen}>
-              <PopoverTrigger asChild>
+            <div className="space-y-2">
+              <Label htmlFor="api-key-input">
+                {t("api-credentials.label")}
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="api-key-input"
+                  type="password"
+                  value={localApiKey}
+                  placeholder={t("api-credentials.placeholder", {
+                    provider: activeSource?.name ?? "",
+                  })}
+                  onChange={(event) => setLocalApiKey(event.target.value)}
+                  onBlur={applyApiKey}
+                />
                 <Button
                   variant="outline"
-                  role="combobox"
-                  aria-expanded={modelPopoverOpen}
-                  className="flex-2 justify-between"
+                  onClick={clearApiKey}
+                  disabled={!localApiKey}
                 >
-                  {modelDisplay}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  {t("clear-input")}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0">
-                <Command>
-                  <CommandInput placeholder={t("model.sel.search")} />
-                  <CommandList>
-                    <CommandEmpty>{t("model.sel.empty")}</CommandEmpty>
-                    <CommandGroup>
-                      {availableModels.map((model) => (
-                        <CommandItem
-                          key={model.name}
-                          value={model.name}
-                          onSelect={(currentValue) => {
-                            handleModelSelect(
-                              currentValue === activeSource?.model
-                                ? ""
-                                : currentValue,
-                            );
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              activeSource?.model === model.name
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          {model.displayName}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <Button variant="outline" onClick={loadModels} className="flex-1">
-              {t("model.refresh")}
-            </Button>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="model-manual">{t("model.manual.title")}</Label>
-            <Input
-              id="model-manual"
-              value={activeSource?.model ?? ""}
-              onChange={(event) =>
-                activeSource &&
-                updateSource(activeSource.id, { model: event.target.value })
-              }
-              placeholder={t("model.manual.placeholder")}
-            />
-            <p className="text-xs text-muted-foreground">
-              {t("model.manual.desc")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("thinking.title")}</CardTitle>
-          <CardDescription>{t("thinking.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {activeSource?.provider === "gemini" && (
-            <div className="space-y-2">
-              <Label>{t("thinking.budget")}</Label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1">
-                  <Slider
-                    value={[localThinkingBudget]}
-                    onValueChange={(value) =>
-                      handleThinkingBudgetChange(value[0])
-                    }
-                    min={128}
-                    max={24576}
-                    step={1}
-                  />
-                </div>
-                <Input
-                  className="w-24"
-                  value={localThinkingBudget}
-                  type="number"
-                  min={128}
-                  max={24576}
-                  onChange={(event) =>
-                    handleThinkingBudgetChange(
-                      Math.max(
-                        128,
-                        Math.min(24576, Number(event.target.value) || 128),
-                      ),
-                    )
-                  }
-                />
-                <span>{t("thinking.tokens-unit")}</span>
               </div>
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="traits-input">{t("traits.title")}</Label>
-            <div className="relative">
-              <Textarea
-                id="traits-input"
-                className="min-h-[100px] pr-20"
-                value={localTraits}
-                onChange={(event) => handleTraitsChange(event.target.value)}
-                placeholder={t("traits.placeholder")}
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-2 top-2"
-                onClick={clearTraits}
-                disabled={!localTraits}
+            <div className="space-y-2">
+              <Label htmlFor="base-url-input">
+                {t("advanced.custom-base-url.title")}
+              </Label>
+              <div className="flex items-center space-x-2">
+                <Input
+                  id="base-url-input"
+                  type="url"
+                  value={localBaseUrl}
+                  placeholder={t("advanced.custom-base-url.placeholder")}
+                  onChange={(event) => setLocalBaseUrl(event.target.value)}
+                  onBlur={applyBaseUrl}
+                />
+                <Button variant="outline" onClick={resetBaseUrl}>
+                  {t("reset")}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t("advanced.custom-base-url.helper", {
+                  provider: activeSource?.name ?? "",
+                })}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("appearance.title")}</CardTitle>
+            <CardDescription>{t("appearance.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="theme-select">
+                {t("appearance.theme.label")}
+              </Label>
+              <select
+                id="theme-select"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                value={themePreference}
+                onChange={(event) =>
+                  handleThemeSelect(event.target.value as ThemePreference)
+                }
               >
-                {t("clear-input")}
+                {themeOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {t("appearance.theme.desc")}
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="language-select">
+                {t("appearance.language.label")}
+              </Label>
+              <select
+                id="language-select"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                value={language}
+                onChange={(event) =>
+                  handleLanguageSelect(event.target.value as LanguagePreference)
+                }
+              >
+                {languageOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                {t("appearance.language.desc")}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{shortcutsTitle}</CardTitle>
+            <CardDescription>{shortcutsDesc}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {shortcutItems.map((item) => (
+              <div
+                key={item.action}
+                className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div>
+                  <p className="font-medium">{item.label}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.description}
+                  </p>
+                </div>
+                <ShortcutRecorder
+                  value={keybindings[item.action] ?? ""}
+                  onChange={(combo) => setKeybinding(item.action, combo)}
+                />
+              </div>
+            ))}
+            <Button variant="ghost" onClick={resetKeybindings} className="mt-2">
+              {shortcutsResetLabel}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("model.title")}</CardTitle>
+            <CardDescription>{t("model.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <Popover
+                open={modelPopoverOpen}
+                onOpenChange={setModelPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={modelPopoverOpen}
+                    className="flex-2 justify-between"
+                  >
+                    {modelDisplay}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0">
+                  <Command>
+                    <CommandInput placeholder={t("model.sel.search")} />
+                    <CommandList>
+                      <CommandEmpty>{t("model.sel.empty")}</CommandEmpty>
+                      <CommandGroup>
+                        {availableModels.map((model) => (
+                          <CommandItem
+                            key={model.name}
+                            value={model.name}
+                            onSelect={(currentValue) => {
+                              handleModelSelect(
+                                currentValue === activeSource?.model
+                                  ? ""
+                                  : currentValue,
+                              );
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                activeSource?.model === model.name
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            {model.displayName}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              <Button variant="outline" onClick={loadModels} className="flex-1">
+                {t("model.refresh")}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">{t("traits.desc")}</p>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="model-manual">{t("model.manual.title")}</Label>
+              <Input
+                id="model-manual"
+                value={activeSource?.model ?? ""}
+                onChange={(event) =>
+                  activeSource &&
+                  updateSource(activeSource.id, { model: event.target.value })
+                }
+                placeholder={t("model.manual.placeholder")}
+              />
+              <p className="text-xs text-muted-foreground">
+                {t("model.manual.desc")}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("advanced.title")}</CardTitle>
-          <CardDescription>{t("advanced.desc")}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="image-binarizing"
-              checked={imageBinarizing}
-              onCheckedChange={(state) => setImageBinarizing(state as boolean)}
-            />
-            <Label htmlFor="image-binarizing">
-              {t("advanced.image-post-processing.binarizing")}
-            </Label>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("thinking.title")}</CardTitle>
+            <CardDescription>{t("thinking.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {activeSource?.provider === "gemini" && (
+              <div className="space-y-2">
+                <Label>{t("thinking.budget")}</Label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Slider
+                      value={[localThinkingBudget]}
+                      onValueChange={(value) =>
+                        handleThinkingBudgetChange(value[0])
+                      }
+                      min={128}
+                      max={24576}
+                      step={1}
+                    />
+                  </div>
+                  <Input
+                    className="w-24"
+                    value={localThinkingBudget}
+                    type="number"
+                    min={128}
+                    max={24576}
+                    onChange={(event) =>
+                      handleThinkingBudgetChange(
+                        Math.max(
+                          128,
+                          Math.min(24576, Number(event.target.value) || 128),
+                        ),
+                      )
+                    }
+                  />
+                  <span>{t("thinking.tokens-unit")}</span>
+                </div>
+              </div>
+            )}
 
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="show-qwen-hint"
-              checked={showQwenHint}
-              onCheckedChange={(state) => setShowQwenHint(Boolean(state))}
-            />
-            <Label htmlFor="show-qwen-hint">
-              {t("advanced.ui.show-qwen-hint")}
-            </Label>
-          </div>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="traits-input">{t("traits.title")}</Label>
+              <div className="relative">
+                <Textarea
+                  id="traits-input"
+                  className="min-h-[100px] pr-20"
+                  value={localTraits}
+                  onChange={(event) => handleTraitsChange(event.target.value)}
+                  placeholder={t("traits.placeholder")}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="absolute right-2 top-2"
+                  onClick={clearTraits}
+                  disabled={!localTraits}
+                >
+                  {t("clear-input")}
+                </Button>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t("traits.desc")}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Button className="w-full" onClick={handleBack}>
-        {t("back")} <Kbd>ESC</Kbd>
-      </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>{t("advanced.title")}</CardTitle>
+            <CardDescription>{t("advanced.desc")}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="image-binarizing"
+                checked={imageBinarizing}
+                onCheckedChange={(state) =>
+                  setImageBinarizing(state as boolean)
+                }
+              />
+              <Label htmlFor="image-binarizing">
+                {t("advanced.image-post-processing.binarizing")}
+              </Label>
+            </div>
 
-      <AddAISourceDialog open={addDialogOpen} onChange={setAddDialogOpen} />
-    </div>
+            <div className="flex items-center gap-3">
+              <Checkbox
+                id="show-qwen-hint"
+                checked={showQwenHint}
+                onCheckedChange={(state) => setShowQwenHint(Boolean(state))}
+              />
+              <Label htmlFor="show-qwen-hint">
+                {t("advanced.ui.show-qwen-hint")}
+              </Label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button className="w-full" onClick={handleBack}>
+          {t("back")} <Kbd>ESC</Kbd>
+        </Button>
+
+        <AddAISourceDialog open={addDialogOpen} onChange={setAddDialogOpen} />
+      </div>
+    </>
   );
 }

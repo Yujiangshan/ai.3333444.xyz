@@ -1,3 +1,6 @@
+"use client";
+
+import Image from "next/image";
 import { TabsTrigger } from "@radix-ui/react-tabs";
 import {
   Card,
@@ -466,7 +469,7 @@ export default function SolutionsArea() {
                               <div className="overflow-hidden rounded-xl border border-slate-700">
                                 <PhotoProvider>
                                   <PhotoView src={entry.item.url}>
-                                    <img
+                                    <Image
                                       src={entry.item.url}
                                       alt={`Preview ${entry.item.file.name || idx + 1}`}
                                       className="block max-h-96 w-full object-contain bg-black/20 cursor-pointer"
