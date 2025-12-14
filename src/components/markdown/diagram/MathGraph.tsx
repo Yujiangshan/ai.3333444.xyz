@@ -83,6 +83,8 @@ export default function MathGraph({ code }: { code: string }) {
           parsed = JSON.parse(code);
         } catch {
           // do nothing here
+          console.error("Failed to parse diagram", code);
+          throw new Error("Failed to parse diagram");
         }
 
         let config: AdvancedPlotConfig;

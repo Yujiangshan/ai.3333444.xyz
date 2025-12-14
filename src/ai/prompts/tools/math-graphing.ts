@@ -1,87 +1,79 @@
 export const DIAGRAM_TOOL_PROMPT = `
 ## Interactive Diagram Tools
 
-You have access to specialized rendering tools for Math and Physics. When a user asks a question that requires visual explanation, use the specific code blocks below.
+You have access to specialized rendering tools for Math and Physics.
 
-### CRITICAL FORMATTING RULES (MUST FOLLOW)
-1. **NO INLINE CODE**: You must NEVER output a tool block inline.
-   - ❌ WRONG: Here is the graph \`\`\`plot-function {...} \`\`\`
-   - ✅ RIGHT:
-     Here is the graph:
-     
-     \`\`\`plot-function
-     {...}
-     \`\`\`
-2. **MANDATORY NEWLINES**: You MUST leave an empty line **before** the opening \`\`\` and **after** the closing \`\`\`.
-3. **VALID JSON ONLY**: Inside the code block, output **ONLY** raw, valid JSON. 
-   - Do NOT add comments (e.g., \`// comment\`).
-   - Do NOT use single quotes for keys. Use double quotes \`"key": "value"\`.
+### 🛑 CRITICAL JSON SYNTAX RULES (STRICT ENFORCEMENT) 🛑
+
+1. **NO UNRESOLVED MATH EXPRESSIONS**:
+   - JSON standard **DOES NOT** support arithmetic.
+   - You **MUST** compute all values internally before generating JSON.
+   - **Forbidden characters** in numeric fields: \`*\`, \`+\`, \`/\`, \`(\`, \`)\`.
+
+   | Field Type | ❌ WRONG (Crashes App) | ✅ RIGHT (Valid JSON) |
+   | :--- | :--- | :--- |
+   | **Numbers** | \`"y": 10 * 9.8\` | \`"y": 98\` |
+   | **Arrays** | \`"domain": [-2*PI, 2*PI]\` | \`"domain": [-6.28, 6.28]\` |
+   | **Trig** | \`"x": 5 * cos(60)\` | \`"x": 2.5\` |
+
+2. **VALID JSON ONLY**:
+   - No comments (\`//...\`).
+   - No trailing commas.
+   - Keys must be double-quoted.
+
+3. **BLOCK FORMAT**:
+   - Always surround with \`\`\`tag\`\`\`.
+   - Leave empty lines around the block.
 
 ---
 
 ### Tool 1: Math Function Graph
-**Trigger**: When plotting mathematical functions, comparing curves, or visualizing equations.
-**Language Tag**: \`plot-function\`
-**Content**: JSON object (Advanced Configuration Schema).
+**Tag**: \`plot-function\`
 
-#### Schema & Capabilities:
-- **Multiple Functions**: Use the \`data\` array.
-- **Labels**: Use \`label\` inside data items for legends.
-- **Ranges**: Use \`"range": [min, max]\` to limit the domain of a specific function. Use \`null\` for unbounded (R).
-- **Customization**: \`color\`, \`grid\`, \`title\`, \`xAxis\`, \`yAxis\`.
+#### Schema:
+- **fn (String)**: The **ONLY** place where math syntax (x^2, sin(x)) is allowed.
+- **data (Array)**: List of function objects.
+- **xAxis / yAxis**:
+  - **domain (Array<Number>)**: **MUST BE RAW NUMBERS**. Example: \`[-3.14, 3.14]\`, NOT \`[-PI, PI]\`.
+  - **label (String)**: Axis label.
 
-#### Examples:
-
-**A. Multi-function Comparison with Labels:**
+#### Example (Correctly Calculated):
 \`\`\`plot-function
 {
-  "title": "Projectile Motion",
+  "title": "Trigonometry",
   "data": [
-    { "fn": "-4.9*x^2 + 10*x", "color": "red", "label": "Object A" },
-    { "fn": "-4.9*x^2 + 15*x", "color": "blue", "label": "Object B" }
+    { "fn": "sin(x)", "color": "blue", "label": "Sine" }
   ],
-  "xAxis": { "label": "Time (s)", "domain": [0, 4] },
-  "yAxis": { "label": "Height (m)", "domain": [0, 15] },
+  "xAxis": { 
+    "label": "Radians", 
+    "domain": [-6.28, 6.28] 
+  },
+  "yAxis": { 
+    "label": "Amplitude", 
+    "domain": [-1.5, 1.5] 
+  },
   "grid": true
-}
-\`\`\`
-
-**B. Implicit Function (Circle) + Point:**
-\`\`\`plot-function
-{
-  "grid": true,
-  "data": [
-    { "fn": "x^2 + y^2 - 4", "fnType": "implicit", "color": "purple", "label": "Circle r=2" },
-    { "points": [[0,0]], "fnType": "points", "graphType": "scatter", "color": "black", "label": "Center" }
-  ]
-}
-\`\`\`
-
-**C. Piecewise Function (Using Range):**
-\`\`\`plot-function
-{
-  "title": "Piecewise Function",
-  "data": [
-    { "fn": "x^2", "range": [-2, 1], "color": "blue", "label": "x^2 (-2 <= x <= 1)" },
-    { "fn": "2*x - 1", "range": [1, 4], "color": "orange", "label": "2x-1 (1 < x <= 4)" }
-  ]
 }
 \`\`\`
 
 ---
 
 ### Tool 2: Physics Force Diagram
-**Trigger**: When analyzing forces (Free Body Diagram).
-**Language Tag**: \`plot-force\`
-**Content**: JSON Array of force objects.
-**Note**: Output raw magnitudes/directions. The renderer handles the visualization.
+**Tag**: \`plot-force\`
 
-#### Example:
+#### Schema:
+- **x (Number)**: Final calculated float.
+- **y (Number)**: Final calculated float.
+- **name (String)**: Label.
+
+#### Example (Correctly Calculated):
+*Scenario: 10N force at 30 degrees.*
+*Internal Math: x = 10 * cos(30) ≈ 8.66, y = 10 * sin(30) = 5.0*
+
 \`\`\`plot-force
 [
-  { "name": "mg", "x": 0, "y": -10, "color": "red" },
-  { "name": "N", "x": 0, "y": 10, "color": "green" },
-  { "name": "F_frict", "x": -3, "y": 0, "color": "orange" }
+  { "name": "Gravity", "x": 0, "y": -9.8, "color": "red" },
+  { "name": "Tension", "x": 8.66, "y": 5.0, "color": "blue" }
 ]
 \`\`\`
 `;
