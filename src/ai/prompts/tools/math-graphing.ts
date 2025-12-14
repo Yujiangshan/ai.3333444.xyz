@@ -27,6 +27,7 @@ You have access to specialized rendering tools for Math and Physics. When a user
 #### Schema & Capabilities:
 - **Multiple Functions**: Use the \`data\` array.
 - **Labels**: Use \`label\` inside data items for legends.
+- **Ranges**: Use \`"range": [min, max]\` to limit the domain of a specific function. Use \`null\` for unbounded (R).
 - **Customization**: \`color\`, \`grid\`, \`title\`, \`xAxis\`, \`yAxis\`.
 
 #### Examples:
@@ -56,9 +57,15 @@ You have access to specialized rendering tools for Math and Physics. When a user
 }
 \`\`\`
 
-**C. Simple Quick Plot:**
+**C. Piecewise Function (Using Range):**
 \`\`\`plot-function
-{ "fn": "sin(x)", "domain": [-6, 6] }
+{
+  "title": "Piecewise Function",
+  "data": [
+    { "fn": "x^2", "range": [-2, 1], "color": "blue", "label": "x^2 (-2 <= x <= 1)" },
+    { "fn": "2*x - 1", "range": [1, 4], "color": "orange", "label": "2x-1 (1 < x <= 4)" }
+  ]
+}
 \`\`\`
 
 ---

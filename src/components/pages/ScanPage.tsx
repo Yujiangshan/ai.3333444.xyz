@@ -6,7 +6,7 @@ import { useEffect, useMemo, useCallback, useRef, useState } from "react";
 import { useAiStore } from "@/store/ai-store";
 import ActionsCard from "../cards/ActionsCard";
 import PreviewCard from "../cards/PreviewCard";
-import { SOLVE_SYSTEM_PROMPT } from "@/ai/prompts";
+import { SOLVE_SYSTEM_PROMPT } from "@/ai/prompts/global";
 import { fileToBase64, uint8ToBase64 } from "@/utils/encoding";
 import { parseSolveResponse } from "@/ai/response";
 

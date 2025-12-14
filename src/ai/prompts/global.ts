@@ -1,4 +1,4 @@
-import { DIAGRAM_TOOL_PROMPT } from "./diagramtool-prompts";
+import { DIAGRAM_TOOL_PROMPT } from "./tools/math-graphing";
 
 export const IMPROVE_SYSTEM_PROMPT = String.raw`
 你是一个作业求解工具。你的核心任务是根据用户提供的现有解题方案（包括问题、答案和解析），进行审核、修正和优化，最终输出一个质量更高、更准确的解答。

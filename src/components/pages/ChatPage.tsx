@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils";
 import { useAiStore, type AiSource } from "@/store/ai-store";
 import { useChatStore } from "@/store/chat-store";
 import type { AiChatMessage } from "@/ai/chat-types";
-import { BASE_CHAT_SYSTEM_PROMPT } from "@/ai/prompts";
+import { BASE_CHAT_SYSTEM_PROMPT } from "@/ai/prompts/global";
 
 // UI Components
 import { Button } from "../ui/button";

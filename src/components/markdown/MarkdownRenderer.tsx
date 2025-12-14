@@ -22,7 +22,11 @@ const MarkdownRenderer = ({ source }: { source: string }) => {
           const content = String(children).replace(/\n$/, "");
 
           if (lang === "plot-function") {
-            return <MathGraph code={content} />;
+            return (
+              <div className="h-100 w-100">
+                <MathGraph code={content} />
+              </div>
+            );
           }
 
           if (lang === "plot-force") {

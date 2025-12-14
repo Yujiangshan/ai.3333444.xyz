@@ -7,11 +7,11 @@ import { parseImproveResponse, type ImproveResponse } from "@/ai/response";
 import { useAiStore } from "@/store/ai-store";
 import { forwardRef, useImperativeHandle, useMemo, useState } from "react";
 import { renderImproveXml } from "@/ai/request";
-import { IMPROVE_SYSTEM_PROMPT } from "@/ai/prompts";
+import { IMPROVE_SYSTEM_PROMPT } from "@/ai/prompts/global";
 import { uint8ToBase64 } from "@/utils/encoding";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { TextInputDialog } from "./TextInputDialog"; // Import the new component
+import { TextInputDialog } from "./TextInputDialog";
 
 export type ImproveSolutionDialogProps = {
   entry: OrderedSolution;
