@@ -84,7 +84,7 @@ const CodeBlock = ({
 
     if (lang === "plot-function") {
       component = (
-        <div className="h-100 w-100">
+        <div className="h-80 w-80 lg:h-100 lg:w-100">
           <MathGraph code={content} />
         </div>
       );
